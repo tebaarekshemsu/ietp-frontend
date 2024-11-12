@@ -60,7 +60,7 @@ const DataCard = ({ title, data, currentHourly, message }) => {
       <h2>{title}</h2>
 
       <div className="hourly-section">
-        <img src={`/assets/${title.toLowerCase()}.png`} alt={title} className="metric-image" />
+        <img src={`/assets/temperature.png`} alt={title} className="metric-image" />
         <div className="hourly-info">
           <p>Current Hourly: {currentHourly}</p>
           <p className="message">{message}</p>

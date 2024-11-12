@@ -67,7 +67,7 @@ body {
 }
 
 .metric-image {
-  width: 50%;
+  width: 20%;
   object-fit: contain;
   margin-right: 20px;
 }

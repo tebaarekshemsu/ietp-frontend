@@ -8,12 +8,11 @@ const Dashboard = () => {
   const [activityPage, setActivityPage] = useState(0);
   const activitiesPerPage = 2;
 
-  // Placeholder data for each farm
   const placeholderData = {
     traditional: {
       temperature: 30,
       humidity: 40,
-      ph: 4,
+      ph: 9,
       dailyAverage: { temperature: 28, humidity: 65, ph: 6.8 },
       monthlyAverage: { temperature: 27, humidity: 68, ph: 7.1 },
       daily: [
@@ -42,12 +41,10 @@ const Dashboard = () => {
     },
   };
 
-  // Placeholder functions for actions
   const turnOnFan = () => alert("Fan turned on for hydroponic farm!");
   const turnOnWaterPump = () => alert("Water pump turned on!");
   const adjustPH = () => alert("Adjusting pH level...");
 
-  // Determine activities based on conditions
   const allActivities = [
     {
       condition: placeholderData.hydroponic.temperature > 25,
@@ -59,29 +56,28 @@ const Dashboard = () => {
       condition: placeholderData.traditional.humidity < 40,
       message: "Low humidity in traditional farm. Turn on water pump.",
       action: turnOnWaterPump,
-      color: "blue",
+      color: "rgb(204, 92, 108)",
     },
     {
       condition: placeholderData.hydroponic.humidity < 40,
       message: "Low humidity in hydroponic farm. Turn on water pump.",
       action: turnOnWaterPump,
-      color: "blue",
+      color: "rgb(204, 92, 108)",
     },
     {
       condition: placeholderData.traditional.ph < 6,
       message: "Low pH in traditional farm. Adjust pH levels.",
       action: adjustPH,
-      color: "blue",
+      color: "rgb(123, 39, 121)",
     },
     {
-        condition: placeholderData.traditional.ph > 8,
-        message: "High pH in traditional farm. Adjust pH levels.",
-        action: adjustPH,
-        color: "orange",
-      },
+      condition: placeholderData.traditional.ph > 8,
+      message: "High pH in traditional farm. Adjust pH levels.",
+      action: adjustPH,
+      color: "rgb(238, 55, 34)",
+    },
   ].filter(activity => activity.condition);
 
-  // Paginated activities
   const paginatedActivities = allActivities.slice(
     activityPage * activitiesPerPage,
     (activityPage + 1) * activitiesPerPage
@@ -100,7 +96,7 @@ const Dashboard = () => {
       </header>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {['Overview', 'Traditional Farm', 'Hydroponic Farm'].map(tab => (
           <button
             key={tab}
@@ -111,6 +107,7 @@ const Dashboard = () => {
               color: activeTab === tab ? '#fff' : '#000',
               border: '1px solid #ddd',
               borderRadius: '5px',
+              flex: '1 1 100px', // For mobile view
             }}
           >
             {tab}
@@ -121,7 +118,7 @@ const Dashboard = () => {
       {/* Tab Content */}
       {activeTab === 'Overview' && (
         <>
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '20px' }}>
             <CurrentConditions data={placeholderData} />
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
               <h2>Activities</h2>
@@ -175,7 +172,7 @@ const Dashboard = () => {
               )}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <HistoryChart title="Temperature History" data={placeholderData.traditional.daily} />
             <HistoryChart title="Humidity History" data={placeholderData.traditional.daily} />
             <HistoryChart title="pH History" data={placeholderData.traditional.daily} />

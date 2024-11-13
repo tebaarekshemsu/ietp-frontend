@@ -13,7 +13,7 @@ const Dashboard = () => {
     traditional: {
       temperature: 30,
       humidity: 40,
-      ph: 7.5,
+      ph: 4,
       dailyAverage: { temperature: 28, humidity: 65, ph: 6.8 },
       monthlyAverage: { temperature: 27, humidity: 68, ph: 7.1 },
       daily: [
@@ -50,29 +50,35 @@ const Dashboard = () => {
   // Determine activities based on conditions
   const allActivities = [
     {
-      condition: placeholderData.hydroponic.temperature > 30,
+      condition: placeholderData.hydroponic.temperature > 25,
       message: "High temperature in hydroponic farm. Turn on the fan.",
       action: turnOnFan,
       color: "red",
     },
     {
-      condition: placeholderData.traditional.humidity < 50,
+      condition: placeholderData.traditional.humidity < 40,
       message: "Low humidity in traditional farm. Turn on water pump.",
       action: turnOnWaterPump,
       color: "blue",
     },
     {
-      condition: placeholderData.hydroponic.humidity < 50,
+      condition: placeholderData.hydroponic.humidity < 40,
       message: "Low humidity in hydroponic farm. Turn on water pump.",
       action: turnOnWaterPump,
       color: "blue",
     },
     {
-      condition: placeholderData.traditional.ph > 7,
-      message: "High pH in traditional farm. Adjust pH levels.",
+      condition: placeholderData.traditional.ph < 6,
+      message: "Low pH in traditional farm. Adjust pH levels.",
       action: adjustPH,
-      color: "orange",
+      color: "blue",
     },
+    {
+        condition: placeholderData.traditional.ph > 8,
+        message: "High pH in traditional farm. Adjust pH levels.",
+        action: adjustPH,
+        color: "orange",
+      },
   ].filter(activity => activity.condition);
 
   // Paginated activities

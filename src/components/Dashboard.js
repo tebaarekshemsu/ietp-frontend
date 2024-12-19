@@ -1,197 +1,150 @@
-import React, { useState } from 'react';
-import CurrentConditions from './CurrentConditions';
-import HistoryChart from './HistoryChart';
-import FarmDetails from './FarmDetails';
-
+import React, { useState, useEffect, useContext } from 'react';
+import { Link } from 'react-router-dom';
+import { Thermometer, Droplet, Activity, Power } from 'react-feather';
+import axios from 'axios';
+import { AuthContext } from '../contexts/AuthContext';
+import io from 'socket.io-client';
+import { baseUrl } from '../config/url';
+const socket = io(baseUrl);  // Define the socket instance
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('Overview');
-  const [activityPage, setActivityPage] = useState(0);
-  const activitiesPerPage = 2;
+  const [dashboardData, setDashboardData] = useState({});
+  const [layers, setLayers] = useState([]);
+  const { setAvailableLayers } = useContext(AuthContext);
 
-  // Placeholder data for each farm
-  const placeholderData = {
-    traditional: {
-      temperature: 30,
-      humidity: 40,
-      ph: 9,
-      dailyAverage: { temperature: 28, humidity: 65, ph: 6.8 },
-      monthlyAverage: { temperature: 27, humidity: 68, ph: 7.1 },
-      daily: [
-        { date: '2023-01-01', temperature: 30, humidity: 70, ph: 6.9 },
-        { date: '2023-01-02', temperature: 29, humidity: 68, ph: 7.0 },
-      ],
-      monthly: [
-        { month: '2023-01', temperature: 28, humidity: 67, ph: 7.1 },
-        { month: '2023-02', temperature: 27, humidity: 68, ph: 7.0 },
-      ],
-    },
-    hydroponic: {
-      temperature: 35,
-      humidity: 30,
-      ph: 6.2,
-      dailyAverage: { temperature: 25, humidity: 75, ph: 6.6 },
-      monthlyAverage: { temperature: 26, humidity: 76, ph: 6.7 },
-      daily: [
-        { date: '2023-01-01', temperature: 25, humidity: 77, ph: 6.5 },
-        { date: '2023-01-02', temperature: 26, humidity: 76, ph: 6.6 },
-      ],
-      monthly: [
-        { month: '2023-01', temperature: 25.5, humidity: 75.5, ph: 6.6 },
-        { month: '2023-02', temperature: 26.0, humidity: 76.0, ph: 6.7 },
-      ],
-    },
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await axios.get(baseUrl+'/api/dashboard', {
+          headers: { Authorization: localStorage.getItem('token') }
+        });
+        setDashboardData(response.data);
+        const availableLayers = Object.keys(response.data).filter(layer => layer !== '0');
+        setLayers(availableLayers);
+        setAvailableLayers(availableLayers);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+
+    fetchDashboardData();
+  }, [setAvailableLayers]);
+
+  const getIcon = (name) => {
+    if (name.toLowerCase().includes('temperature')) return <Thermometer className="w-6 h-6 text-[rgb(17,139,80)]" />;
+    if (name.toLowerCase().includes('humidity') || name.toLowerCase().includes('moisture')) return <Droplet className="w-6 h-6 text-[rgb(93,185,150)]" />;
+    if (name.toLowerCase().includes('ph')) return <Activity className="w-6 h-6 text-[rgb(227,240,175)]" />;
+    return <Power className="w-6 h-6 text-[rgb(251,246,233)]" />;
   };
-
-  // Placeholder functions for actions
-  const turnOnFan = () => alert("Fan turned on for hydroponic farm!");
-  const turnOnWaterPump = () => alert("Water pump turned on!");
-  const adjustPH = () => alert("Adjusting pH level...");
-
-  // Determine activities based on conditions
-  const allActivities = [
-    {
-      condition: placeholderData.hydroponic.temperature > 25,
-      message: "High temperature in hydroponic farm. Turn on the fan.",
-      action: turnOnFan,
-      color: "red",
-    },
-    {
-      condition: placeholderData.traditional.humidity < 40,
-      message: "Low humidity in traditional farm. Turn on water pump.",
-      action: turnOnWaterPump,
-      color: "rgb(204, 92, 108)",
-    },
-    {
-      condition: placeholderData.hydroponic.humidity < 40,
-      message: "Low humidity in hydroponic farm. Turn on water pump.",
-      action: turnOnWaterPump,
-      color: "rgb(204, 92, 108)",
-    },
-    {
-      condition: placeholderData.traditional.ph < 6,
-      message: "Low pH in traditional farm. Adjust pH levels.",
-      action: adjustPH,
-      color: "rgb(123, 39, 121)",
-    },
-    {
-        condition: placeholderData.traditional.ph > 8,
-        message: "High pH in traditional farm. Adjust pH levels.",
-        action: adjustPH,
-        color: "rgb(238, 55, 34)",
-      },
-  ].filter(activity => activity.condition);
-
-  // Paginated activities
-  const paginatedActivities = allActivities.slice(
-    activityPage * activitiesPerPage,
-    (activityPage + 1) * activitiesPerPage
-  );
-
-  const totalPages = Math.ceil(allActivities.length / activitiesPerPage);
-
+  useEffect(() => {
+    if (socket) {
+      console.log('Listening for real-time updates...');
+  
+      socket.on('dataUpdate', (data) => {
+        console.log('Received real-time update:', data);
+  
+        try {
+          const { name, value } = data;
+  
+          if (!name) {
+            console.error('Received update with undefined name');
+            return;
+          }
+  
+          // Update dashboardData
+          setDashboardData((prevData) => {
+            const updatedData = { ...prevData };
+  
+            let found = false;
+  
+            Object.keys(updatedData).forEach((layer) => {
+              Object.keys(updatedData[layer]).forEach((area) => {
+                const sensorIndex = updatedData[layer][area].sensors.findIndex(
+                  (sensor) => sensor.name === name
+                );
+                if (sensorIndex !== -1) {
+                  updatedData[layer][area].sensors[sensorIndex].value = value;
+                  found = true;
+                }
+  
+                const motorIndex = updatedData[layer][area].motors.findIndex(
+                  (motor) => motor.name === name
+                );
+                if (motorIndex !== -1) {
+                  updatedData[layer][area].motors[motorIndex].value = value;
+                  found = true;
+                }
+              });
+            });
+  
+            if (!found) {
+              console.warn(`Device with name ${name} not found in dashboardData`);
+            }
+  
+            return updatedData;
+          });
+        } catch (err) {
+          console.error('Error updating real-time data:', err);
+        }
+      });
+  
+      socket.on('error', (err) => {
+        console.error('Socket error:', err.message);
+      });
+    }
+  }, [socket]);
+  
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>Modern Farm Dashboard</h1>
-        <div>
-          <button>Settings</button>
-          <button>Help</button>
-        </div>
-      </header>
+    <div className="container mx-auto px-4 py-8 pt-16" style={{backgroundImage: "url('https://media.istockphoto.com/id/1255871842/photo/smart-farming-with-iot-futuristic-agriculture-concept.jpg?s=1024x1024&w=is&k=20&c=Oj8GAw0fCDPFjxR-_vMZV7MA7EfG_8O-Qoe-dB45wLs=')", backgroundSize: 'fill', backgroundPosition: 'center'}}>
+      <div className="bg-white bg-opacity-90 p-6 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold mb-6 text-green-700">Dashboard</h1>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-        {['Overview', 'Traditional Farm', 'Hydroponic Farm'].map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              padding: '10px',
-              backgroundColor: activeTab === tab ? '#007BFF' : '#f0f0f0',
-              color: activeTab === tab ? '#fff' : '#000',
-              border: '1px solid #ddd',
-              borderRadius: '5px',
-            }}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'Overview' && (
-        <>
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-            <CurrentConditions data={placeholderData} />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <h2>Activities</h2>
-              <div style={{ flex: 1, overflowY: 'auto' }}>
-                {paginatedActivities.length > 0 ? (
-                  paginatedActivities.map((activity, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        border: `2px solid ${activity.color}`,
-                        borderRadius: '5px',
-                        padding: '10px',
-                        marginBottom: '10px',
-                        color: activity.color,
-                      }}
-                    >
-                      <p>{activity.message}</p>
-                      <button
-                        onClick={activity.action}
-                        style={{
-                          backgroundColor: activity.color,
-                          color: '#fff',
-                          padding: '5px 10px',
-                          border: 'none',
-                          borderRadius: '3px',
-                        }}
-                      >
-                        {activity.message.split(' ').slice(-3).join(' ')}
-                      </button>
+        {Object.entries(dashboardData).map(([layer, areas]) => (
+          <div key={layer} className="mb-8">
+            <h2 className="text-2xl font-semibold mb-4 text-green-600">
+              {layer === '0' ? 'Soil' : `Hydroponic Layer ${layer}`}
+            </h2>
+            {Object.entries(areas).map(([area, devices]) => (
+              <div key={area} className="mb-6">
+                <h3 className="text-xl font-medium mb-3 text-green-500">Area {area}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {devices.sensors.map((sensor) => (
+                    <div key={sensor.name} className="bg-white rounded-lg shadow-md p-4">
+                      <div className="flex items-center mb-2">
+                        {getIcon(sensor.name)}
+                        <span className="ml-2 font-medium text-gray-700">{sensor.name}</span>
+                      </div>
+                      <p className="text-lg font-bold text-gray-800">
+                        {sensor.value !== null ? `${sensor.value} ${sensor.unit}` : 'No data'}
+                      </p>
+                      <p className={`text-sm ${sensor.status === 'normal' ? 'text-green-500' : 'text-red-500'}`}>
+                        Status: {sensor.status}
+                      </p>
                     </div>
-                  ))
-                ) : (
-                  <p>No activities needed at the moment.</p>
-                )}
-              </div>
-              {totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
-                  <button
-                    onClick={() => setActivityPage(prev => Math.max(prev - 1, 0))}
-                    disabled={activityPage === 0}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setActivityPage(prev => Math.min(prev + 1, totalPages - 1))}
-                    disabled={activityPage === totalPages - 1}
-                  >
-                    Next
-                  </button>
+                  ))}
+                  {devices.motors.map((motor) => (
+                    <div key={motor.name} className="bg-white rounded-lg shadow-md p-4">
+                      <div className="flex items-center mb-2">
+                        <Power className="w-6 h-6 text-yellow-500" />
+                        <span className="ml-2 font-medium text-gray-700">{motor.name}</span>
+                      </div>
+                      <p className={`text-sm ${motor.status === 'on' ? 'text-green-500' : 'text-red-500'}`}>
+                        Status: {motor.status}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            ))}
           </div>
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <HistoryChart title="Temperature History" data={placeholderData.traditional.daily} />
-            <HistoryChart title="Humidity History" data={placeholderData.traditional.daily} />
-            <HistoryChart title="pH History" data={placeholderData.traditional.daily} />
-          </div>
-        </>
-      )}
-
-      {activeTab === 'Traditional Farm' && (
-        <FarmDetails farmType="Traditional Farm" data={placeholderData.traditional} />
-      )}
-
-      {activeTab === 'Hydroponic Farm' && (
-        <FarmDetails farmType="Hydroponic Farm" data={placeholderData.hydroponic} />
-      )}
+        ))}
+        <Link to="/add-device" className="inline-block mt-6 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-300">
+          Add New Device
+        </Link>
+      </div>
     </div>
   );
 };
 
 export default Dashboard;
+
+

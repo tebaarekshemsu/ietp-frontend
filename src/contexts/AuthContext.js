@@ -1,9 +1,9 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
-import axios from 'axios';
+import React, { createContext, useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 
-import io from 'socket.io-client';
-import { baseUrl } from '../config/url';
+import io from "socket.io-client";
+import { baseUrl } from "../config/url";
 
 export const AuthContext = createContext();
 
@@ -12,10 +12,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [availableLayers, setAvailableLayers] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
@@ -27,7 +26,7 @@ export const AuthProvider = ({ children }) => {
           initializeSocket(token);
         }
       } catch (error) {
-        console.error('Error decoding token:', error);
+        console.error("Error decoding token:", error);
         logout();
       }
     }
@@ -35,26 +34,28 @@ export const AuthProvider = ({ children }) => {
 
   const initializeSocket = (token) => {
     const newSocket = io(baseUrl, {
-      auth: { token }
+      auth: { token },
     });
 
-    newSocket.on('notification', (newNotification) => {
+    newSocket.on("notification", (newNotification) => {
       setNotifications((prev) => [
         ...prev,
-        { ...newNotification, read: false }
+        { ...newNotification, read: false },
       ]);
     });
 
-    newSocket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+    newSocket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
     });
-
-    setSocket(newSocket);
   };
+
   const login = async (email, password) => {
-    const response = await axios.post(baseUrl+'/api/login', { email, password });
+    const response = await axios.post(baseUrl + "/api/login", {
+      email,
+      password,
+    });
     const { token } = response.data;
-    localStorage.setItem('token', token);
+    localStorage.setItem("token", token);
     const decoded = jwtDecode(token);
     setIsAuthenticated(true);
     setUser(decoded);
@@ -62,7 +63,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     setIsAuthenticated(false);
     setUser(null);
     setAvailableLayers([]);
@@ -95,4 +96,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-

@@ -5,21 +5,21 @@ import axios from 'axios';
 import { AuthContext } from '../contexts/AuthContext';
 import io from 'socket.io-client';
 import { baseUrl } from '../config/url';
+
 const socket = io(baseUrl);  // Define the socket instance
+
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({});
-  const [layers, setLayers] = useState([]);
   const { setAvailableLayers } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await axios.get(baseUrl+'/api/dashboard', {
+        const response = await axios.get(baseUrl + '/api/dashboard', {
           headers: { Authorization: localStorage.getItem('token') }
         });
         setDashboardData(response.data);
         const availableLayers = Object.keys(response.data).filter(layer => layer !== '0');
-        setLayers(availableLayers);
         setAvailableLayers(availableLayers);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -35,27 +35,28 @@ const Dashboard = () => {
     if (name.toLowerCase().includes('ph')) return <Activity className="w-6 h-6 text-[rgb(227,240,175)]" />;
     return <Power className="w-6 h-6 text-[rgb(251,246,233)]" />;
   };
+
   useEffect(() => {
     if (socket) {
       console.log('Listening for real-time updates...');
-  
+
       socket.on('dataUpdate', (data) => {
         console.log('Received real-time update:', data);
-  
+
         try {
           const { name, value } = data;
-  
+
           if (!name) {
             console.error('Received update with undefined name');
             return;
           }
-  
+
           // Update dashboardData
           setDashboardData((prevData) => {
             const updatedData = { ...prevData };
-  
+
             let found = false;
-  
+
             Object.keys(updatedData).forEach((layer) => {
               Object.keys(updatedData[layer]).forEach((area) => {
                 const sensorIndex = updatedData[layer][area].sensors.findIndex(
@@ -65,7 +66,7 @@ const Dashboard = () => {
                   updatedData[layer][area].sensors[sensorIndex].value = value;
                   found = true;
                 }
-  
+
                 const motorIndex = updatedData[layer][area].motors.findIndex(
                   (motor) => motor.name === name
                 );
@@ -75,26 +76,26 @@ const Dashboard = () => {
                 }
               });
             });
-  
+
             if (!found) {
               console.warn(`Device with name ${name} not found in dashboardData`);
             }
-  
+
             return updatedData;
           });
         } catch (err) {
           console.error('Error updating real-time data:', err);
         }
       });
-  
+
       socket.on('error', (err) => {
         console.error('Socket error:', err.message);
       });
     }
-  }, [socket]);
-  
+  }, []); // Removed 'socket' from dependency array
+
   return (
-    <div className="container mx-auto px-4 py-8 pt-16" style={{backgroundImage: "url('https://media.istockphoto.com/id/1255871842/photo/smart-farming-with-iot-futuristic-agriculture-concept.jpg?s=1024x1024&w=is&k=20&c=Oj8GAw0fCDPFjxR-_vMZV7MA7EfG_8O-Qoe-dB45wLs=')", backgroundSize: 'fill', backgroundPosition: 'center'}}>
+    <div className="container mx-auto px-4 py-8 pt-16" style={{ backgroundImage: "url('https://media.istockphoto.com/id/1255871842/photo/smart-farming-with-iot-futuristic-agriculture-concept.jpg?s=1024x1024&w=is&k=20&c=Oj8GAw0fCDPFjxR-_vMZV7MA7EfG_8O-Qoe-dB45wLs=')", backgroundSize: 'fill', backgroundPosition: 'center' }}>
       <div className="bg-white bg-opacity-90 p-6 rounded-lg shadow-lg">
         <h1 className="text-3xl font-bold mb-6 text-green-700">Dashboard</h1>
 
@@ -146,5 +147,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-

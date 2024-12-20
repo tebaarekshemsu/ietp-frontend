@@ -1,7 +1,6 @@
-import React, { createContext, useState, useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
+import React, { createContext, useState, useEffect, useCallback } from "react";
+import {jwtDecode} from "jwt-decode";
 import axios from "axios";
-
 import io from "socket.io-client";
 import { baseUrl } from "../config/url";
 
@@ -13,6 +12,24 @@ export const AuthProvider = ({ children }) => {
   const [availableLayers, setAvailableLayers] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState(0);
+
+  const initializeSocket = useCallback((token) => {
+    const newSocket = io(baseUrl, {
+      auth: { token },
+    });
+
+    newSocket.on("notification", (newNotification) => {
+      setReadNotifications((prevCount) => prevCount + 1);
+      setNotifications((prev) => [
+        ...prev,
+        { ...newNotification, read: false },
+      ]);
+    });
+
+    newSocket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+    });
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -31,25 +48,7 @@ export const AuthProvider = ({ children }) => {
         logout();
       }
     }
-  }, []);
-
-  const initializeSocket = (token) => {
-    const newSocket = io(baseUrl, {
-      auth: { token },
-    });
-
-    newSocket.on("notification", (newNotification) => {
-      setReadNotifications(readNotifications+1);
-      setNotifications((prev) => [
-        ...prev,
-        { ...newNotification, read: false },
-      ]);
-    });
-
-    newSocket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error);
-    });
-  };
+  }, [initializeSocket]);
 
   const login = async (email, password) => {
     const response = await axios.post(baseUrl + "/api/login", {

@@ -5,7 +5,8 @@ import { Menu, X, Bell, ChevronDown } from 'react-feather';
 import NotificationModal from './NotificationModal';
 
 const Header = () => {
-  const { isAuthenticated, logout, availableLayers, notifications } = useContext(AuthContext);
+  const { isAuthenticated, logout, availableLayers, notifications , readNotifications,
+    setReadNotifications } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -87,11 +88,15 @@ const Header = () => {
                 <div className="relative">
                   <button 
                     className="p-2 rounded-full hover:bg-green-700 ml-2"
-                    onClick={() => setIsNotificationModalOpen(true)}
+                    onClick={function(){
+                      setIsNotificationModalOpen(true);
+                      setReadNotifications(0);
+                    }}
+                    // onClick={() => setIsNotificationModalOpen(true)}
                   >
                     <Bell size={20} />
                   </button>
-                  {notifications.length > 0 && (
+                  {readNotifications > 0 && (
                     <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
                       {notifications.length}
                     </span>

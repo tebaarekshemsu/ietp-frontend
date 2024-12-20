@@ -23,10 +23,13 @@ const AddDevice = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+  const response =
       await axios.post(baseUrl+'/api/device', formData, {
         headers: { Authorization: localStorage.getItem('token') }
       });
       toast.success('Device added successfully!');
+      console.log(response.data.device.device_id);
+      alert('Device added successfully with ID: ' + response.data.device.device_id);
       navigate('/');
     } catch (error) {
       toast.error('Failed to add device. Please try again.');

@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [availableLayers, setAvailableLayers] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [readNotifications, setReadNotifications] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -38,6 +39,7 @@ export const AuthProvider = ({ children }) => {
     });
 
     newSocket.on("notification", (newNotification) => {
+      setReadNotifications(readNotifications+1);
       setNotifications((prev) => [
         ...prev,
         { ...newNotification, read: false },
@@ -89,6 +91,8 @@ export const AuthProvider = ({ children }) => {
         setAvailableLayers,
         notifications,
         setNotifications,
+        readNotifications,
+        setReadNotifications,
         markNotificationAsRead,
       }}
     >

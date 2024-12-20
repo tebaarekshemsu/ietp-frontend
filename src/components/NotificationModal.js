@@ -44,10 +44,7 @@ const NotificationModal = ({ isOpen, onClose, notifications }) => {
               >
                 <p className="font-medium">{notification.message}</p>
                 <p className="text-sm text-green-600 mt-1">
-                  {new Date(notification.timestamp).toLocaleString(undefined, {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  })}
+                
                 </p>
               </li>
             ))}

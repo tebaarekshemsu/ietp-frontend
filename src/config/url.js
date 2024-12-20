@@ -1,1 +1,1 @@
-export const baseUrl = 'https://ietp-backend-4s2i.onrender.com/';
+export const baseUrl = 'https://ietp-backend-4s2i.onrender.com';

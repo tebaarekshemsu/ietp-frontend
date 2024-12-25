@@ -8,6 +8,7 @@ const Login = () => {
     email: '',
     password: '',
   });
+  const [loading, setLoading] = useState(false); // Add loading state
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
 
@@ -17,12 +18,15 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true); // Set loading to true
     try {
       await login(formData.email, formData.password);
       toast.success('Login successful!');
       navigate('/');
     } catch (error) {
       toast.error('Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false); // Set loading to false
     }
   };
 
@@ -55,7 +59,13 @@ const Login = () => {
               />
             </div>
             <div className="flex items-baseline justify-between">
-              <button type="submit" className="px-6 py-2 mt-4 text-white bg-[rgb(17,139,80)] rounded-lg hover:bg-[rgb(93,185,150)]">Login</button>
+              <button
+                type="submit"
+                className="px-6 py-2 mt-4 text-white bg-[rgb(17,139,80)] rounded-lg hover:bg-[rgb(93,185,150)] disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading} // Disable button while loading
+              >
+                {loading ? 'Logging in...' : 'Login'}
+              </button>
               <Link to="/signup" className="text-sm text-[rgb(17,139,80)] hover:underline">Sign up</Link>
             </div>
           </div>
@@ -66,4 +76,3 @@ const Login = () => {
 };
 
 export default Login;
-

@@ -11,6 +11,7 @@ const SignUp = () => {
     password: '',
     confirmPassword: '',
   });
+  const [isSigningUp, setIsSigningUp] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -23,12 +24,15 @@ const SignUp = () => {
       toast.error("Passwords don't match");
       return;
     }
+    setIsSigningUp(true);
     try {
-      await axios.post(baseUrl+'/api/signup', formData);
+      await axios.post(`${baseUrl}/api/signup`, formData);
       toast.success('Sign up successful! Please log in.');
       navigate('/login');
     } catch (error) {
       toast.error('Sign up failed. Please try again.');
+    } finally {
+      setIsSigningUp(false);
     }
   };
 
@@ -83,8 +87,20 @@ const SignUp = () => {
               />
             </div>
             <div className="flex items-baseline justify-between">
-              <button type="submit" className="px-6 py-2 mt-4 text-white bg-[rgb(17,139,80)] rounded-lg hover:bg-[rgb(93,185,150)]">Sign Up</button>
-              <Link to="/login" className="text-sm text-[rgb(17,139,80)] hover:underline">Already have an account? Login</Link>
+              <button
+                type="submit"
+                disabled={isSigningUp}
+                className={`px-6 py-2 mt-4 text-white rounded-lg ${
+                  isSigningUp
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-[rgb(17,139,80)] hover:bg-[rgb(93,185,150)]'
+                }`}
+              >
+                {isSigningUp ? 'Signing Up...' : 'Sign Up'}
+              </button>
+              <Link to="/login" className="text-sm text-[rgb(17,139,80)] hover:underline">
+                Already have an account? Login
+              </Link>
             </div>
           </div>
         </form>
@@ -94,4 +110,3 @@ const SignUp = () => {
 };
 
 export default SignUp;
-

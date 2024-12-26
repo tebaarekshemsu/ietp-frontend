@@ -16,23 +16,43 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-100 ">
+      <div className="min-h-screen bg-gray-100">
         <Header />
         <main className="container mx-auto">
           <Routes>
-            <Route path="/signup" element={!isAuthenticated ? <SignUp /> : <Navigate to="/" replace />} />
-            <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" replace />} />
-            <Route path="/" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />} />
-            <Route path="/soil" element={isAuthenticated ? <Soil /> : <Navigate to="/login" replace />} />
+            {/* Public Routes */}
+            <Route
+              path="/signup"
+              element={!isAuthenticated ? <SignUp /> : <Navigate to="/" replace />}
+            />
+            <Route
+              path="/login"
+              element={!isAuthenticated ? <Login /> : <Navigate to="/" replace />}
+            />
+
+            {/* Protected Routes */}
+            <Route
+              path="/"
+              element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
+            />
+            <Route
+              path="/soil"
+              element={isAuthenticated ? <Soil /> : <Navigate to="/login" replace />}
+            />
             {availableLayers.map((layer) => (
-              <Route 
+              <Route
                 key={layer}
-                path={`/hydroponic/${layer}`} 
-                element={isAuthenticated ? <Hydroponic layer={layer} /> : <Navigate to="/login" replace />} 
+                path={`/hydroponic/${layer}`}
+                element={isAuthenticated ? <Hydroponic layer={layer} /> : <Navigate to="/login" replace />}
               />
             ))}
-            <Route path="/add-device" element={isAuthenticated ? <AddDevice /> : <Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route
+              path="/add-device"
+              element={isAuthenticated ? <AddDevice /> : <Navigate to="/login" replace />}
+            />
+
+            {/* Catch-all for undefined routes */}
+            <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
           </Routes>
         </main>
         <ToastContainer position="bottom-right" />
@@ -42,4 +62,3 @@ function App() {
 }
 
 export default App;
-

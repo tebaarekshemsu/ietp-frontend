@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { baseUrl } from '../config/url';
+import io from 'socket.io-client';
+
+const socket = io(baseUrl);  // Define the socket instance
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend);
 
@@ -11,26 +14,41 @@ const Hydroponic = ({ layer }) => {
   const [hydroponicData, setHydroponicData] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchHydroponicData = async () => {
-      try {
-        const response = await axios.get(baseUrl + `/api/dashboard-detail/${layer}`, {
-          headers: { Authorization: localStorage.getItem('token') },
-        });
-        if (Object.keys(response.data).length === 0) {
-          navigate('/');
-        } else {
-          setHydroponicData(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching hydroponic data:', error);
+  const fetchHydroponicData = useCallback(async () => {
+    try {
+      const response = await axios.get(baseUrl + `/api/dashboard-detail/${layer}`, {
+        headers: { Authorization: localStorage.getItem('token') },
+      });
+      if (Object.keys(response.data).length === 0) {
         navigate('/');
+      } else {
+        setHydroponicData(response.data);
       }
-    };
-
-    fetchHydroponicData();
+    } catch (error) {
+      console.error('Error fetching hydroponic data:', error);
+      navigate('/');
+    }
   }, [layer, navigate]);
 
+  useEffect(() => {
+    fetchHydroponicData();
+  });
+
+  useEffect(() => {
+    if (socket) {
+      console.log('Listening for real-time updates...');
+    
+      socket.on('dataUpdate', (data) => {
+        console.log('Received real-time update:', data);
+        fetchHydroponicData();  // Refetch data on update
+      });
+    
+      socket.on('error', (err) => {
+        console.error('Socket error:', err.message);
+      });
+    }
+  }, [fetchHydroponicData]);
+  
   const calculateAverage = (values) => {
     if (!values || values.length === 0) return 0;
     const total = values.reduce((sum, entry) => sum + entry.value, 0);

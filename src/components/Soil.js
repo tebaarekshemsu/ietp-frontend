@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Bar } from 'react-chartjs-2';
 import {
@@ -11,7 +11,9 @@ import {
   Legend,
 } from 'chart.js';
 import { baseUrl } from '../config/url';
+import io from 'socket.io-client';
 
+const socket = io(baseUrl);  // Define the socket instance
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -24,21 +26,36 @@ ChartJS.register(
 const Soil = () => {
   const [soilData, setSoilData] = useState(null);
 
-  useEffect(() => {
-    const fetchSoilData = async () => {
-      try {
-        const response = await axios.get(baseUrl + '/api/dashboard-detail/0', {
-          headers: { Authorization: localStorage.getItem('token') },
-        });
-        setSoilData(response.data);
-      } catch (error) {
-        console.error('Error fetching soil data:', error);
-      }
-    };
+const fetchSoilData = useCallback(async () => {
+  try {
+    const response = await axios.get(baseUrl + '/api/dashboard-detail/0', {
+      headers: { Authorization: localStorage.getItem('token') },
+    });
+    setSoilData(response.data);
+  } catch (error) {
+    console.error('Error fetching soil data:', error);
+  }
+}, []);
 
-    fetchSoilData();
-  }, []);
+useEffect(() => {
+  fetchSoilData();
+});
 
+useEffect(() => {
+    if (socket) {
+      console.log('Listening for real-time updates...');
+    
+      socket.on('dataUpdate', (data) => {
+        console.log('Received real-time update:', data);
+        fetchSoilData();  // Refetch data on update
+      });
+    
+      socket.on('error', (err) => {
+        console.error('Socket error:', err.message);
+      });
+    }
+  }, [fetchSoilData]);
+  
   const calculateAverage = (values) => {
     if (!values || values.length === 0) return 0;
     const total = values.reduce((sum, entry) => sum + entry.value, 0);

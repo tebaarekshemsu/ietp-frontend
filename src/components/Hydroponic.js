@@ -56,20 +56,21 @@ const Hydroponic = ({ layer }) => {
   };
 
   const renderLineChart = (sensorData) => {
-    const average = calculateAverage(sensorData.values);
-
+    const reversedValues = [...sensorData.values].reverse(); // Reverse the values array
+    const average = calculateAverage(reversedValues);
+  
     const data = {
-      labels: sensorData.values.map((v) => new Date(v.timestamp).toLocaleString()),
+      labels: reversedValues.map((v) => new Date(v.timestamp).toLocaleString()),
       datasets: [
         {
           label: `${sensorData.name} (Avg: ${average.toFixed(2)} ${sensorData.unit || ''})`,
-          data: sensorData.values.map((v) => v.value),
+          data: reversedValues.map((v) => v.value),
           borderColor: 'rgb(75, 192, 192)',
           backgroundColor: 'rgba(75, 192, 192, 0.5)',
         },
       ],
     };
-
+  
     const options = {
       responsive: true,
       maintainAspectRatio: false,
@@ -82,22 +83,24 @@ const Hydroponic = ({ layer }) => {
         y: { title: { display: true, text: `Value (${sensorData.unit || ''})` } },
       },
     };
-
+  
     return <Line data={data} options={options} height={250} />;
   };
-
+  
   const renderBarChart = (sensorData) => {
+    const reversedValues = [...sensorData.values].reverse(); // Reverse the values array
+  
     const data = {
-      labels: sensorData.values.map((v) => new Date(v.timestamp).toLocaleString()),
+      labels: reversedValues.map((v) => new Date(v.timestamp).toLocaleString()),
       datasets: [
         {
           label: `${sensorData.name}`,
-          data: sensorData.values.map((v) => v.value),
+          data: reversedValues.map((v) => v.value),
           backgroundColor: 'rgba(53, 162, 235, 0.5)',
         },
       ],
     };
-
+  
     const options = {
       responsive: true,
       maintainAspectRatio: false,
@@ -110,16 +113,17 @@ const Hydroponic = ({ layer }) => {
         y: { title: { display: true, text: `Value (${sensorData.unit || ''})` } },
       },
     };
-
+  
     return <Bar data={data} options={options} height={250} />;
   };
-
+  
   const renderPieChart = (sensorData) => {
-    const average = calculateAverage(sensorData.values);
-    const belowAverage = sensorData.values.filter((v) => v.value < average).length;
-    const atAverage = sensorData.values.filter((v) => v.value === average).length;
-    const aboveAverage = sensorData.values.filter((v) => v.value > average).length;
-
+    const reversedValues = [...sensorData.values].reverse(); // Reverse the values array
+    const average = calculateAverage(reversedValues);
+    const belowAverage = reversedValues.filter((v) => v.value < average).length;
+    const atAverage = reversedValues.filter((v) => v.value === average).length;
+    const aboveAverage = reversedValues.filter((v) => v.value > average).length;
+  
     const data = {
       labels: ['Below Average', 'Average', 'Above Average'],
       datasets: [
@@ -129,7 +133,7 @@ const Hydroponic = ({ layer }) => {
         },
       ],
     };
-
+  
     const options = {
       responsive: true,
       maintainAspectRatio: false,
@@ -138,9 +142,10 @@ const Hydroponic = ({ layer }) => {
         title: { display: true, text: `${sensorData.name} Distribution` },
       },
     };
-
+  
     return <Pie data={data} options={options} height={250} />;
   };
+  
 
   if (!hydroponicData) return <div className="text-center mt-8">Loading...</div>;
 
@@ -171,7 +176,7 @@ const Hydroponic = ({ layer }) => {
                         <div className="mb-4">{renderPieChart({ ...sensorData, name: sensorName })}</div>
                         <div className="mt-4">
                           <p className="text-gray-700">
-                            Current Value: {sensorData.values[sensorData.values.length - 1].value} {sensorData.unit}
+                            Current Value: {sensorData.values[0].value} {sensorData.unit}
                           </p>
                           <p className="text-gray-700">
                             Average: {calculateAverage(sensorData.values).toFixed(2)} {sensorData.unit}

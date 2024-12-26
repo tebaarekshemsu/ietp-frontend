@@ -1,18 +1,22 @@
-import React, { useContext } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Header from './components/Header';
-import SignUp from './components/Signup';
-import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import Soil from './components/Soil';
-import Hydroponic from './components/Hydroponic';
-import AddDevice from './components/AddDevice';
-import { AuthContext } from './contexts/AuthContext';
+import React, { useContext } from "react";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Header from "./components/Header";
+import SignUp from "./components/Signup";
+import Login from "./components/Login";
+import Dashboard from "./components/Dashboard";
+import Soil from "./components/Soil";
+import Hydroponic from "./components/Hydroponic";
+import AddDevice from "./components/AddDevice";
+import { AuthContext } from "./contexts/AuthContext";
 
 function App() {
-  const { isAuthenticated, availableLayers } = useContext(AuthContext);
+  const { isAuthenticated, isLoading, availableLayers } = useContext(AuthContext);
+
+  if (isLoading) {
+    return <div>Loading...</div>; // Render a loading indicator during initialization
+  }
 
   return (
     <Router>
@@ -20,7 +24,6 @@ function App() {
         <Header />
         <main className="container mx-auto">
           <Routes>
-            {/* Public Routes */}
             <Route
               path="/signup"
               element={!isAuthenticated ? <SignUp /> : <Navigate to="/" replace />}
@@ -29,8 +32,6 @@ function App() {
               path="/login"
               element={!isAuthenticated ? <Login /> : <Navigate to="/" replace />}
             />
-
-            {/* Protected Routes */}
             <Route
               path="/"
               element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
@@ -39,20 +40,22 @@ function App() {
               path="/soil"
               element={isAuthenticated ? <Soil /> : <Navigate to="/login" replace />}
             />
-            {availableLayers.map((layer) => (
-              <Route
-                key={layer}
-                path={`/hydroponic/${layer}`}
-                element={isAuthenticated ? <Hydroponic layer={layer} /> : <Navigate to="/login" replace />}
-              />
-            ))}
+            {isAuthenticated && availableLayers.length > 0 &&
+              availableLayers.map((layer) => (
+                <Route
+                  key={layer}
+                  path={`/hydroponic/${layer}`}
+                  element={<Hydroponic layer={layer} />}
+                />
+              ))}
             <Route
               path="/add-device"
               element={isAuthenticated ? <AddDevice /> : <Navigate to="/login" replace />}
             />
-
-            {/* Catch-all for undefined routes */}
-            <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
+            <Route
+              path="*"
+              element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />}
+            />
           </Routes>
         </main>
         <ToastContainer position="bottom-right" />

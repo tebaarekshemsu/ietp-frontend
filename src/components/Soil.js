@@ -69,21 +69,24 @@ useEffect(() => {
   };
 
   const renderBarChart = (sensorData) => {
+    // Reverse the values array to display the graph from latest to oldest
+    const reversedValues = [...sensorData.values].reverse();
+  
     const data = {
-      labels: sensorData.values.map((v) =>
+      labels: reversedValues.map((v) =>
         new Date(v.timestamp).toLocaleString()
       ),
       datasets: [
         {
           label: `${sensorData.name}`,
-          data: sensorData.values.map((v) => v.value),
+          data: reversedValues.map((v) => v.value),
           backgroundColor: 'rgba(75, 192, 192, 0.6)',
           borderColor: 'rgba(75, 192, 192, 1)',
           borderWidth: 1,
         },
       ],
     };
-
+  
     const options = {
       responsive: true,
       maintainAspectRatio: false,
@@ -101,7 +104,7 @@ useEffect(() => {
         y: { title: { display: true, text: `Value (${sensorData.unit || ''})` } },
       },
     };
-
+  
     return (
       <div
         className="chart-container"
@@ -110,7 +113,7 @@ useEffect(() => {
         <Bar data={data} options={options} />
       </div>
     );
-  };
+  };  
 
   if (!soilData) return <div className="text-center mt-8">Loading...</div>;
 
@@ -149,7 +152,7 @@ useEffect(() => {
                           {sensorName} Analytics
                         </h3>
                         <p className="text-gray-700">
-                          <strong>Current Value:</strong> {sensorData.values[sensorData.values.length - 1]?.value}{' '}
+                          <strong>Current Value:</strong> {sensorData.values[0]?.value}{' '}
                           {sensorData.unit}
                         </p>
                         <p className="text-gray-700">

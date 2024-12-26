@@ -4,15 +4,34 @@ import { AuthContext } from '../contexts/AuthContext';
 import { Menu, X, Bell, ChevronDown } from 'react-feather';
 import NotificationModal from './NotificationModal';
 
+import axios from 'axios';
+import { baseUrl } from '../config/url';
+
+
 const Header = () => {
   const { isAuthenticated, logout, availableLayers, notifications , readNotifications,
-    setReadNotifications } = useContext(AuthContext);
+  setReadNotifications, setAvailableLayers } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
   const menuRef = useRef(null);
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await axios.get(baseUrl + '/api/dashboard', {
+          headers: { Authorization: localStorage.getItem('token') }
+        });
+        const availableLayers = Object.keys(response.data).filter(layer => layer !== '0');
+        setAvailableLayers(availableLayers);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+
+    fetchDashboardData();
+  }, [setAvailableLayers]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
@@ -34,7 +53,6 @@ const Header = () => {
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
-
   return (
     <header className="bg-green-800 text-white shadow-md fixed top-0 left-0 right-0 h-16 z-50">
       <div className="container mx-auto px-4">

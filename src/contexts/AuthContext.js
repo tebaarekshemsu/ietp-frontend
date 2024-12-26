@@ -8,6 +8,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [availableLayers, setAvailableLayers] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -31,6 +32,15 @@ export const AuthProvider = ({ children }) => {
     });
   }, []);
 
+  const initializeLayers = async (userId) => {
+    try {
+      const response = await axios.get(`${baseUrl}/api/layers/${userId}`);
+      setAvailableLayers(response.data.layers || []); // Assuming the response contains `layers`
+    } catch (error) {
+      console.error("Error fetching layers:", error);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -42,16 +52,18 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(true);
           setUser(decodedToken);
           initializeSocket(token);
+          initializeLayers(decodedToken.id); // Pass user ID to fetch layers
         }
       } catch (error) {
         console.error("Error decoding token:", error);
         logout();
       }
     }
+    setIsLoading(false); // Set loading to false after initialization
   }, [initializeSocket]);
 
   const login = async (email, password) => {
-    const response = await axios.post(baseUrl + "/api/login", {
+    const response = await axios.post(`${baseUrl}/api/login`, {
       email,
       password,
     });
@@ -61,6 +73,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(true);
     setUser(decoded);
     initializeSocket(token);
+    initializeLayers(decoded.id); // Fetch layers after login
   };
 
   const logout = () => {
@@ -83,6 +96,7 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         isAuthenticated,
+        isLoading,
         user,
         login,
         logout,

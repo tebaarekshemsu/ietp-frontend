@@ -122,7 +122,7 @@ const Dashboard = () => {
                       </p>
                     </div>
                   ))}
-                  {devices.motors.map((motor) => (
+                  {/* {devices.motors.map((motor) => (
                     <div key={motor.name} className="bg-white rounded-lg shadow-md p-4">
                       <div className="flex items-center mb-2">
                         <Power className="w-6 h-6 text-yellow-500" />
@@ -132,7 +132,7 @@ const Dashboard = () => {
                         Status: {motor.status}
                       </p>
                     </div>
-                  ))}
+                  ))} */}
                 </div>
               </div>
             ))}
